@@ -31,6 +31,13 @@
     padding:18px 24px;
     border-bottom:1px solid var(--border);
     display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  header .header-text{
+    display:flex;
     align-items:baseline;
     gap:12px;
     flex-wrap:wrap;
@@ -288,14 +295,66 @@
   footer.page-footer{
     text-align:center; color:var(--text-muted); font-size:12px; padding:20px;
   }
+  .link-btn{
+    font-family:inherit; cursor:pointer; border:none; border-radius:4px;
+    font-size:13px; font-weight:600; padding:8px 12px;
+    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+  }
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.6);
+    display:none; align-items:center; justify-content:center;
+    padding:20px; z-index:1000;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background:var(--panel); border:1px solid var(--border); border-radius:8px;
+    max-width:480px; width:100%; padding:20px; max-height:85vh; overflow-y:auto;
+  }
+  .modal-box h2{
+    margin:0 0 4px; font-size:16px; color:#fff; border:none; padding:0;
+    text-transform:none; letter-spacing:normal;
+  }
+  .modal-box .modal-sub{ color:var(--text-dim); font-size:13px; margin:0 0 16px; }
+  .modal-box ol{
+    margin:0 0 16px; padding-left:20px; display:flex; flex-direction:column;
+    gap:8px; font-size:13.5px; color:var(--text);
+  }
+  .modal-box kbd{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:3px;
+    padding:1px 5px; font-size:12px; font-family:inherit;
+  }
+  .modal-actions{ display:flex; gap:10px; justify-content:flex-end; align-items:center; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>DiSky Embed Builder</h1>
-  <p>Design a Discord embed visually, get ready-to-paste DiSky (Skript) code.</p>
+  <div class="header-text">
+    <h1>DiSky Embed Builder</h1>
+    <p>Design a Discord embed visually, get ready-to-paste DiSky (Skript) code.</p>
+  </div>
+  <button class="btn-accent" id="getExtensionBtn" type="button">Get VS Code Extension</button>
 </header>
+
+<div class="modal-overlay" id="extensionModal">
+  <div class="modal-box">
+    <h2>DiSky Embed Builder — VS Code Extension</h2>
+    <p class="modal-sub">Not on the Marketplace yet, so it installs manually from the downloaded file.</p>
+    <ol>
+      <li>Click <strong>Download .vsix</strong> below.</li>
+      <li>Open VS Code.</li>
+      <li>Open the Extensions view (<kbd>Ctrl+Shift+X</kbd> / <kbd>Cmd+Shift+X</kbd>).</li>
+      <li>Click the <strong>···</strong> menu at the top of the Extensions view, then choose <strong>Install from VSIX...</strong></li>
+      <li>Select the file you downloaded.</li>
+      <li>Reload VS Code if it asks you to.</li>
+    </ol>
+    <p class="hint" style="margin-bottom:16px;">Alternative: Command Palette (<kbd>Ctrl+Shift+P</kbd>) → "Extensions: Install from VSIX...".</p>
+    <div class="modal-actions">
+      <button class="btn-ghost btn-small" id="closeExtensionModal" type="button">Close</button>
+      <a class="link-btn btn-accent" href="./downloads/embed-builder-public-1.0.0.vsix" download>Download .vsix</a>
+    </div>
+  </div>
+</div>
 
 <div class="layout">
   <!-- FORM PANEL -->
@@ -1067,6 +1126,21 @@
     editedBadge.classList.remove("show");
     applyStateToFormInputs();
     update(true);
+  });
+
+  // extension install modal
+  const extensionModal = document.getElementById("extensionModal");
+  document.getElementById("getExtensionBtn").addEventListener("click", ()=>{
+    extensionModal.classList.add("show");
+  });
+  document.getElementById("closeExtensionModal").addEventListener("click", ()=>{
+    extensionModal.classList.remove("show");
+  });
+  extensionModal.addEventListener("click", (e)=>{
+    if (e.target === extensionModal) extensionModal.classList.remove("show");
+  });
+  document.addEventListener("keydown", (e)=>{
+    if (e.key === "Escape") extensionModal.classList.remove("show");
   });
 
   // init
