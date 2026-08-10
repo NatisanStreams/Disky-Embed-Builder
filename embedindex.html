@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiSky Embed Builder</title>
+<style>
+  :root{
+    --bg:#1e1f22;
+    --panel:#2b2d31;
+    --panel-2:#313338;
+    --border:#3f4147;
+    --text:#dbdee1;
+    --text-dim:#949ba4;
+    --text-muted:#80848e;
+    --accent:#5865f2;
+    --accent-hover:#4752c4;
+    --danger:#da373c;
+    --ok:#23a55a;
+    --warn:#f0b232;
+    font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+  }
+  header{
+    padding:18px 24px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  header h1{
+    font-size:20px;
+    margin:0;
+    color:#fff;
+  }
+  header p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:13px;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns: 400px 1fr;
+    gap:20px;
+    padding:20px;
+    align-items:start;
+  }
+  @media (max-width: 900px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px;
+  }
+  .panel h2{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    color:var(--text-dim);
+    margin:0 0 12px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .form-panel{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    max-height:calc(100vh - 110px);
+    overflow-y:auto;
+  }
+  .field-group{ display:flex; flex-direction:column; gap:10px; }
+  label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-dim);
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+  }
+  label .count{ font-weight:400; color:var(--text-muted); }
+  label .count.over{ color:var(--danger); font-weight:600; }
+  input[type=text], input[type=url], textarea, input[type=datetime-local]{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:4px;
+    color:var(--text);
+    padding:8px 10px;
+    font-size:14px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  input:focus, textarea:focus{ outline:2px solid var(--accent); outline-offset:-1px; }
+  textarea{ min-height:70px; }
+  .row{ display:flex; gap:8px; }
+  .row > *{ flex:1; }
+  .color-row{ display:flex; align-items:center; gap:10px; }
+  input[type=color]{
+    width:44px; height:34px; padding:2px; border:1px solid var(--border);
+    border-radius:4px; background:var(--panel-2); cursor:pointer;
+  }
+  .hint{ font-size:11px; color:var(--text-muted); margin-top:-4px; }
+  fieldset{ border:1px solid var(--border); border-radius:6px; padding:10px; margin:0; }
+  legend{ font-size:12px; font-weight:600; color:var(--text-dim); padding:0 4px; }
+  .radio-row{ display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--text); }
+  .radio-row label{ display:flex; align-items:center; gap:6px; font-weight:400; color:var(--text); }
+  .field-card{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    position:relative;
+  }
+  .field-card-head{ display:flex; justify-content:space-between; align-items:center; }
+  .field-card-head span{ font-size:12px; font-weight:600; color:var(--text-dim); }
+  .inline-toggle{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+    border-radius:4px;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 12px;
+  }
+  .btn-accent{ background:var(--accent); color:#fff; }
+  .btn-accent:hover{ background:var(--accent-hover); }
+  .btn-ghost{ background:transparent; color:var(--text-dim); border:1px solid var(--border); }
+  .btn-ghost:hover{ color:var(--text); border-color:var(--text-dim); }
+  .btn-danger-ghost{ background:transparent; color:var(--danger); border:1px solid transparent; padding:4px 8px; font-size:12px; }
+  .btn-danger-ghost:hover{ background:rgba(218,55,60,.15); }
+  .btn-small{ padding:5px 9px; font-size:12px; }
+  .add-field-btn{ align-self:flex-start; }
+  .top-actions{ display:flex; gap:8px; margin-bottom:4px; }
+  .right-col{ display:flex; flex-direction:column; gap:20px; }
+
+  /* ---- Discord preview ---- */
+  .preview-shell{
+    background:var(--panel-2);
+    border-radius:6px;
+    padding:16px;
+  }
+  .discord-message{ display:flex; gap:14px; }
+  .discord-avatar{
+    width:40px; height:40px; border-radius:50%;
+    background:linear-gradient(135deg,#5865f2,#7289da);
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:#fff; font-size:15px;
+  }
+  .discord-body{ min-width:0; flex:1; }
+  .discord-name-row{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
+  .discord-botname{ font-weight:600; color:#fff; font-size:15px; }
+  .discord-botname .bot-tag{
+    background:var(--accent); color:#fff; font-size:10px; font-weight:600;
+    padding:1px 4px; border-radius:3px; vertical-align:middle; margin-left:4px;
+  }
+  .discord-timestamp{ font-size:11px; color:var(--text-muted); }
+
+  .embed{
+    margin-top:6px;
+    max-width:432px;
+    border-left:4px solid #202225;
+    background:#2b2d31;
+    border-radius:4px;
+    padding:12px 14px;
+    font-size:14px;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+  }
+  .embed-body{ display:flex; gap:16px; justify-content:space-between; min-width:0; }
+  .embed-main{ min-width:0; flex:1; overflow-wrap:anywhere; }
+  .embed-author{ display:flex; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
+  .embed-author img{ width:20px; height:20px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .embed-author span{ font-size:13px; font-weight:600; color:#fff; overflow-wrap:anywhere; }
+  .embed-title{ font-weight:600; color:#fff; font-size:15px; margin-bottom:4px; overflow-wrap:anywhere; }
+  .embed-title a{ color:#00a8fc; text-decoration:none; }
+  .embed-title a:hover{ text-decoration:underline; }
+  .embed-desc{ color:#dbdee1; font-size:13.5px; white-space:normal; margin-bottom:4px; overflow-wrap:anywhere; }
+  .embed-desc a{ color:#00a8fc; overflow-wrap:anywhere; }
+  .embed-desc code, .embed-field-name code, .embed-field-value code{
+    background:#1e1f22; padding:0 3px; border-radius:3px; font-size:12.5px; overflow-wrap:anywhere;
+  }
+  .embed-desc .embed-h1{ font-size:18px; font-weight:700; color:#fff; margin:6px 0 2px; overflow-wrap:anywhere; }
+  .embed-desc .embed-h2{ font-size:16px; font-weight:700; color:#fff; margin:5px 0 2px; overflow-wrap:anywhere; }
+  .embed-desc .embed-h3{ font-size:14.5px; font-weight:700; color:#fff; margin:4px 0 2px; overflow-wrap:anywhere; }
+  .embed-field-value .embed-h1, .embed-field-value .embed-h2, .embed-field-value .embed-h3{
+    font-weight:700; color:#fff; margin:4px 0 2px; overflow-wrap:anywhere;
+  }
+  .embed-subtext{ font-size:12px; color:var(--text-muted); margin:2px 0; overflow-wrap:anywhere; }
+  .embed-quote{
+    margin:4px 0; padding-left:10px; border-left:3px solid #4e5058;
+    color:#dbdee1; overflow-wrap:anywhere;
+  }
+  .embed-list{ margin:4px 0; padding-left:22px; overflow-wrap:anywhere; }
+  .embed-list li{ margin:2px 0; }
+  .embed-codeblock{
+    background:#1e1f22; border:1px solid #232428; border-radius:4px;
+    padding:8px 10px; margin:4px 0; font-family:'SF Mono', Consolas, Menlo, monospace;
+    font-size:12.5px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .spoiler{
+    background:#131416; color:transparent; border-radius:3px; padding:0 2px;
+    cursor:pointer; overflow-wrap:anywhere;
+  }
+  .spoiler *{ visibility:hidden; }
+  .spoiler.revealed{ background:#3a3c42; color:inherit; }
+  .spoiler.revealed *{ visibility:visible; }
+  .mention{
+    background:rgba(88,101,242,.3);
+    color:#c9cdfb;
+    border-radius:3px;
+    padding:0 2px;
+    font-weight:500;
+    overflow-wrap:anywhere;
+  }
+  .mention.mention-other{
+    background:rgba(218,55,60,.3);
+    color:#ffb3b3;
+  }
+  .embed-thumb{
+    width:80px; height:80px; border-radius:4px; object-fit:cover; flex-shrink:0; margin-top:2px;
+    background:#1e1f22;
+  }
+  .embed-fields{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; min-width:0; }
+  .embed-field{ flex:1 1 100%; min-width:0; overflow-wrap:anywhere; }
+  .embed-field.inline{ flex:1 1 27%; min-width:110px; }
+  .embed-field-name{ font-weight:600; color:#fff; font-size:13px; margin-bottom:2px; overflow-wrap:anywhere; }
+  .embed-field-value{ color:#dbdee1; font-size:13px; overflow-wrap:anywhere; }
+  .embed-image{
+    margin-top:10px; max-width:100%; border-radius:4px; display:block;
+    background:#1e1f22; max-height:300px; object-fit:cover;
+  }
+  .embed-footer{
+    display:flex; align-items:center; gap:6px; margin-top:10px;
+    color:var(--text-muted); font-size:12px; min-width:0;
+  }
+  .embed-footer img{ width:18px; height:18px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .embed-footer span{ overflow-wrap:anywhere; }
+  .empty-note{ color:var(--text-muted); font-size:13px; font-style:italic; }
+
+  /* ---- code panel ---- */
+  .code-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+  .code-header h2{ margin:0; border:none; padding:0; }
+  #codeOutput{
+    display:block;
+    width:100%;
+    min-height:280px;
+    background:#1e1f22;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:14px 16px;
+    font-family: 'SF Mono', Consolas, Menlo, monospace;
+    font-size:13px;
+    line-height:1.6;
+    color:#dbdee1;
+    margin:0;
+    white-space:pre-wrap;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    resize:vertical;
+  }
+  #codeOutput:focus{ outline:2px solid var(--accent); outline-offset:-1px; }
+  .edited-badge{
+    font-size:11px; color:var(--warn); background:rgba(240,178,50,.12);
+    border:1px solid rgba(240,178,50,.3); border-radius:4px; padding:3px 8px;
+    display:none; align-items:center;
+  }
+  .edited-badge.show{ display:inline-flex; }
+  .warnings{ margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+  .warning-item{
+    font-size:12.5px; color:var(--warn); background:rgba(240,178,50,.1);
+    border:1px solid rgba(240,178,50,.3); border-radius:4px; padding:6px 10px;
+  }
+  .copied-msg{ font-size:12px; color:var(--ok); font-weight:600; }
+  footer.page-footer{
+    text-align:center; color:var(--text-muted); font-size:12px; padding:20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DiSky Embed Builder</h1>
+  <p>Design a Discord embed visually, get ready-to-paste DiSky (Skript) code.</p>
+</header>
+
+<div class="layout">
+  <!-- FORM PANEL -->
+  <div class="panel form-panel">
+    <div class="top-actions">
+      <button class="btn-ghost btn-small" id="loadExampleBtn" type="button">Load example</button>
+      <button class="btn-ghost btn-small" id="resetBtn" type="button">Reset</button>
+    </div>
+
+    <div class="field-group">
+      <h2 style="margin-top:0;border:none;padding:0;">Author</h2>
+      <label>Author name <span class="count" id="count-authorName">0 / 256</span></label>
+      <input type="text" id="authorName" maxlength="256" placeholder="e.g. My Server">
+      <label>Author icon URL</label>
+      <input type="url" id="authorIcon" placeholder="https://example.com/icon.png">
+      <label>Author URL (click name to open)</label>
+      <input type="url" id="authorUrl" placeholder="https://example.com">
+    </div>
+
+    <div class="field-group">
+      <h2>Title</h2>
+      <label>Title <span class="count" id="count-title">0 / 256</span></label>
+      <input type="text" id="title" maxlength="256" placeholder="Embed title">
+      <label>Title URL (click title to open)</label>
+      <input type="url" id="titleUrl" placeholder="https://example.com">
+    </div>
+
+    <div class="field-group">
+      <h2>Description</h2>
+      <label>Description <span class="count" id="count-description">0 / 4096</span></label>
+      <textarea id="description" maxlength="4096" placeholder="Supports **bold**, *italic*/_italic_, __underline__, ~~strike~~, ||spoiler||, `code`, ```code block```, > quote, >>> multi-quote, # / ## / ### headers, -# subtext, - lists, 1. lists, and [link](https://...)"></textarea>
+      <p class="hint">Discord embed description/field markdown is fully supported (title, author, footer stay plain text, matching real Discord). You can also type Skript placeholders like %player% or %{_user}% directly &mdash; they're passed through as-is, not escaped.</p>
+    </div>
+
+    <div class="field-group">
+      <h2>Color</h2>
+      <div class="color-row">
+        <input type="color" id="color" value="#5865f2">
+        <span id="colorHex" style="font-size:13px;color:var(--text-dim);">#5865F2</span>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <h2>Images <span style="text-transform:none;font-weight:400;">(direct links only)</span></h2>
+      <label>Thumbnail URL (small, top-right)</label>
+      <input type="url" id="thumbnailUrl" placeholder="https://example.com/thumb.png">
+      <label>Image URL (large, below fields)</label>
+      <input type="url" id="imageUrl" placeholder="https://example.com/image.png">
+    </div>
+
+    <div class="field-group">
+      <h2>Fields <span id="fieldCountLabel" style="text-transform:none;font-weight:400;">(0 / 25)</span></h2>
+      <div id="fieldsContainer" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <button class="btn-accent btn-small add-field-btn" id="addFieldBtn" type="button">+ Add field</button>
+    </div>
+
+    <div class="field-group">
+      <h2>Footer</h2>
+      <label>Footer text <span class="count" id="count-footerText">0 / 2048</span></label>
+      <input type="text" id="footerText" maxlength="2048" placeholder="Footer text">
+      <label>Footer icon URL</label>
+      <input type="url" id="footerIcon" placeholder="https://example.com/icon.png">
+    </div>
+
+    <div class="field-group">
+      <h2>Timestamp</h2>
+      <fieldset>
+        <legend>Show a timestamp in the footer?</legend>
+        <div class="radio-row" id="timestampMode">
+          <label><input type="radio" name="tsMode" value="none" checked> None</label>
+          <label><input type="radio" name="tsMode" value="now"> Now (when sent)</label>
+          <label><input type="radio" name="tsMode" value="custom"> Specific date</label>
+        </div>
+        <div id="customDateWrap" style="margin-top:8px;display:none;">
+          <input type="datetime-local" id="customDate">
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+    <div class="panel">
+      <h2>Live preview</h2>
+      <div class="preview-shell">
+        <div class="discord-message">
+          <div class="discord-avatar" id="previewAvatar">B</div>
+          <div class="discord-body">
+            <div class="discord-name-row">
+              <span class="discord-botname">Your Bot<span class="bot-tag">BOT</span></span>
+              <span class="discord-timestamp">Today at 12:00 PM</span>
+            </div>
+            <div id="embedPreview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="code-header">
+        <h2 style="margin:0;">Generated DiSky code</h2>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="edited-badge" id="editedBadge">Couldn't recognize any embed lines yet</span>
+          <span class="copied-msg" id="copiedMsg" style="display:none;">Copied!</span>
+          <button class="btn-ghost btn-small" id="syncBtn" type="button">Regenerate from form</button>
+          <button class="btn-accent btn-small" id="copyBtn" type="button">Copy code</button>
+        </div>
+      </div>
+      <p class="hint" style="margin:0 0 10px;">This box is editable and two-way: type or paste DiSky code here and the form + live preview update to match. Editing the form updates this box the same way.</p>
+      <textarea id="codeOutput" spellcheck="false"></textarea>
+      <div class="warnings" id="warnings"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="page-footer">Discord embed limits: title 256 &middot; description 4096 &middot; field name 256 &middot; field value 1024 &middot; 25 fields max &middot; footer 2048 &middot; author name 256 &middot; 6000 total characters.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  const state = {
+    authorName: "", authorIcon: "", authorUrl: "",
+    title: "", titleUrl: "",
+    description: "",
+    color: "#5865f2",
+    thumbnailUrl: "", imageUrl: "",
+    footerText: "", footerIcon: "",
+    tsMode: "none", customDate: "",
+    fields: []
+  };
+
+  const els = {};
+  ["authorName","authorIcon","authorUrl","title","titleUrl","description","color",
+   "thumbnailUrl","imageUrl","footerText","footerIcon","customDate"].forEach(id=>{
+    els[id] = document.getElementById(id);
+  });
+
+  const fieldsContainer = document.getElementById("fieldsContainer");
+  const fieldCountLabel = document.getElementById("fieldCountLabel");
+  const addFieldBtn = document.getElementById("addFieldBtn");
+  const customDateWrap = document.getElementById("customDateWrap");
+
+  const MAX_FIELDS = 25;
+  const LIMITS = {
+    title: 256, description: 4096, authorName: 256,
+    footerText: 2048, fieldName: 256, fieldValue: 1024, total: 6000
+  };
+
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+
+  function renderFieldRows(){
+    fieldsContainer.innerHTML = "";
+    state.fields.forEach((f, idx)=>{
+      const card = document.createElement("div");
+      card.className = "field-card";
+      card.innerHTML = `
+        <div class="field-card-head">
+          <span>Field ${idx+1}</span>
+          <button type="button" class="btn-danger-ghost" data-remove="${f.id}">Remove</button>
+        </div>
+        <label>Name <span class="count" data-count-name="${f.id}">${f.name.length} / 256</span></label>
+        <input type="text" maxlength="256" data-field-name="${f.id}" value="${escapeAttr(f.name)}" placeholder="Field name">
+        <label>Value <span class="count" data-count-value="${f.id}">${f.value.length} / 1024</span></label>
+        <textarea maxlength="1024" data-field-value="${f.id}" placeholder="Field value" style="min-height:50px;">${escapeHtml(f.value)}</textarea>
+        <label class="inline-toggle"><input type="checkbox" data-field-inline="${f.id}" ${f.inline?"checked":""}> Inline</label>
+      `;
+      fieldsContainer.appendChild(card);
+    });
+
+    fieldsContainer.querySelectorAll("[data-remove]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-remove");
+        state.fields = state.fields.filter(f=>f.id!==id);
+        renderFieldRows();
+        update();
+      });
+    });
+    fieldsContainer.querySelectorAll("[data-field-name]").forEach(inp=>{
+      inp.addEventListener("input", ()=>{
+        const id = inp.getAttribute("data-field-name");
+        const f = state.fields.find(x=>x.id===id);
+        f.name = inp.value;
+        const c = fieldsContainer.querySelector(`[data-count-name="${id}"]`);
+        c.textContent = `${f.name.length} / 256`;
+        c.classList.toggle("over", f.name.length > LIMITS.fieldName);
+        update();
+      });
+    });
+    fieldsContainer.querySelectorAll("[data-field-value]").forEach(inp=>{
+      inp.addEventListener("input", ()=>{
+        const id = inp.getAttribute("data-field-value");
+        const f = state.fields.find(x=>x.id===id);
+        f.value = inp.value;
+        const c = fieldsContainer.querySelector(`[data-count-value="${id}"]`);
+        c.textContent = `${f.value.length} / 1024`;
+        c.classList.toggle("over", f.value.length > LIMITS.fieldValue);
+        update();
+      });
+    });
+    fieldsContainer.querySelectorAll("[data-field-inline]").forEach(inp=>{
+      inp.addEventListener("change", ()=>{
+        const id = inp.getAttribute("data-field-inline");
+        const f = state.fields.find(x=>x.id===id);
+        f.inline = inp.checked;
+        update();
+      });
+    });
+
+    fieldCountLabel.textContent = `(${state.fields.length} / ${MAX_FIELDS})`;
+    addFieldBtn.style.display = state.fields.length >= MAX_FIELDS ? "none" : "inline-block";
+  }
+
+  addFieldBtn.addEventListener("click", ()=>{
+    if (state.fields.length >= MAX_FIELDS) return;
+    state.fields.push({id:uid(), name:"", value:"", inline:true});
+    renderFieldRows();
+    update();
+  });
+
+  document.querySelectorAll('input[name="tsMode"]').forEach(r=>{
+    r.addEventListener("change", ()=>{
+      state.tsMode = r.value;
+      customDateWrap.style.display = state.tsMode === "custom" ? "block" : "none";
+      update();
+    });
+  });
+
+  Object.keys(els).forEach(id=>{
+    if (!els[id]) return;
+    els[id].addEventListener("input", ()=>{
+      state[id] = els[id].value;
+      if (id === "color") document.getElementById("colorHex").textContent = els[id].value.toUpperCase();
+      update();
+    });
+  });
+
+  function escapeHtml(str){
+    return (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function escapeAttr(str){
+    return escapeHtml(str).replace(/"/g,"&quot;");
+  }
+
+  function escSkript(raw){
+    // % is left alone on purpose: Skript uses %...% for expressions/placeholders
+    // (e.g. %{_user}%), so users need to be able to type those directly.
+    //
+    // A %...% expression embedded in a string is its own lexical context, so
+    // quotes INSIDE it (e.g. %mention tag of channel with id "123"%) must
+    // stay single, unescaped quotes - only quotes in the surrounding literal
+    // text need to be doubled to avoid ending the outer string early.
+    const s = (raw || "").replace(/\r\n/g, "\n");
+    let out = "";
+    let i = 0;
+    while (i < s.length){
+      if (s[i] === "%"){
+        const nl = s.indexOf("\n", i + 1);
+        const close = s.indexOf("%", i + 1);
+        if (close > i + 1 && (nl === -1 || close < nl)){
+          out += s.slice(i, close + 1); // copy the whole %...% span verbatim
+          i = close + 1;
+          continue;
+        }
+      }
+      if (s[i] === '"'){ out += '""'; i++; continue; }
+      if (s[i] === "\n"){ out += "%nl%"; i++; continue; }
+      out += s[i];
+      i++;
+    }
+    return out;
+  }
+
+  function wrapMentions(escapedHtml){
+    // Any %...% is a Skript expression/placeholder. If it looks like a
+    // "mention tag" expression it gets the blue Discord-mention pill;
+    // any other placeholder gets a red pill instead. We don't try to guess
+    // whether a mention resolves to a user/channel/role/etc.
+    return escapedHtml.replace(/%([^%\n]+)%/g, (m, inner) => {
+      const cls = /mention tag/i.test(inner) ? "mention" : "mention mention-other";
+      return `<span class="${cls}">${inner}</span>`;
+    });
+  }
+
+  // Applies inline markdown (bold/italic/underline/strike/spoiler/code/links)
+  // to one raw (unescaped) line/segment of text.
+  function inlineMd(raw){
+    let s = escapeHtml(raw || "");
+    s = wrapMentions(s);
+
+    // inline code spans are protected from every other inline rule
+    const codeSpans = [];
+    s = s.replace(/`([^`\n]+?)`/g, (m, code) => {
+      codeSpans.push(code);
+      return "\u0001" + (codeSpans.length - 1) + "\u0001";
+    });
+
+    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/__(.+?)__/g, "<u>$1</u>");
+    s = s.replace(/~~(.+?)~~/g, "<s>$1</s>");
+    s = s.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    s = s.replace(/(?<![\w*])_(.+?)_(?![\w*])/g, "<em>$1</em>");
+    s = s.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    s = s.replace(/\|\|(.+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+
+    s = s.replace(/\u0001(\d+)\u0001/g, (m, idx) => `<code>${codeSpans[+idx]}</code>`);
+    return s;
+  }
+
+  // Block-level markdown: fenced code blocks, blockquotes (> and >>>),
+  // headers (#/##/###), subtext (-#), and ordered/unordered lists. Operates
+  // on the RAW text so leading markers (>, #, -, ```) can be matched before
+  // HTML-escaping happens (escaping is done per-segment inside inlineMd).
+  //
+  // allowHeaders is false for field values/names: Discord has a confirmed
+  // bug (discord/discord-api-docs#7167) where # headers and -# subtext
+  // render as literal text inside embed fields, even though they work fine
+  // in the embed description.
+  function mdToHtml(text, opts){
+    const allowHeaders = !opts || opts.allowHeaders !== false;
+    const rawLines = (text || "").split("\n");
+    let html = "";
+    let i = 0;
+
+    while (i < rawLines.length){
+      const line = rawLines[i];
+
+      if (/^```/.test(line.trim())){
+        i++;
+        const codeLines = [];
+        while (i < rawLines.length && !/^```\s*$/.test(rawLines[i].trim())){
+          codeLines.push(rawLines[i]);
+          i++;
+        }
+        if (i < rawLines.length) i++; // consume closing fence
+        html += `<pre class="embed-codeblock"><code>${codeLines.map(escapeHtml).join("\n")}</code></pre>`;
+        continue;
+      }
+
+      const triple = /^>>>\s?(.*)$/.exec(line);
+      if (triple){
+        const quoteLines = [triple[1]];
+        i++;
+        while (i < rawLines.length){ quoteLines.push(rawLines[i]); i++; }
+        html += `<blockquote class="embed-quote">${quoteLines.map(inlineMd).join("<br>")}</blockquote>`;
+        continue;
+      }
+
+      if (/^>\s?/.test(line)){
+        const quoteLines = [];
+        while (i < rawLines.length && /^>\s?/.test(rawLines[i])){
+          quoteLines.push(rawLines[i].replace(/^>\s?/, ""));
+          i++;
+        }
+        html += `<blockquote class="embed-quote">${quoteLines.map(inlineMd).join("<br>")}</blockquote>`;
+        continue;
+      }
+
+      if (allowHeaders){
+        const header = /^(#{1,3})\s+(.*)$/.exec(line);
+        if (header){
+          html += `<div class="embed-h${header[1].length}">${inlineMd(header[2])}</div>`;
+          i++;
+          continue;
+        }
+
+        const subtext = /^-#\s+(.*)$/.exec(line);
+        if (subtext){
+          html += `<div class="embed-subtext">${inlineMd(subtext[1])}</div>`;
+          i++;
+          continue;
+        }
+      }
+
+      if (/^[-*]\s+/.test(line)){
+        const items = [];
+        while (i < rawLines.length && /^[-*]\s+/.test(rawLines[i])){
+          items.push(rawLines[i].replace(/^[-*]\s+/, ""));
+          i++;
+        }
+        html += `<ul class="embed-list">${items.map(it => `<li>${inlineMd(it)}</li>`).join("")}</ul>`;
+        continue;
+      }
+
+      if (/^\d+\.\s+/.test(line)){
+        const items = [];
+        while (i < rawLines.length && /^\d+\.\s+/.test(rawLines[i])){
+          items.push(rawLines[i].replace(/^\d+\.\s+/, ""));
+          i++;
+        }
+        html += `<ol class="embed-list">${items.map(it => `<li>${inlineMd(it)}</li>`).join("")}</ol>`;
+        continue;
+      }
+
+      const plain = [];
+      while (i < rawLines.length){
+        const l = rawLines[i];
+        if (/^```/.test(l.trim()) || /^>>>\s?/.test(l) || /^>\s?/.test(l) ||
+            (allowHeaders && (/^#{1,3}\s+/.test(l) || /^-#\s+/.test(l))) ||
+            /^[-*]\s+/.test(l) || /^\d+\.\s+/.test(l)) break;
+        plain.push(l);
+        i++;
+      }
+      html += plain.map(inlineMd).join("<br>");
+    }
+
+    return html;
+  }
+
+  function hexToRgb(hex){
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!m) return {r:88,g:101,b:242};
+    return { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
+  }
+
+  function renderPreview(){
+    const wrap = document.getElementById("embedPreview");
+    const hasContent = state.authorName || state.title || state.description || state.thumbnailUrl ||
+      state.imageUrl || state.footerText || state.fields.some(f=>f.name||f.value);
+
+    if (!hasContent){
+      wrap.innerHTML = '<p class="empty-note">Fill in the form to see your embed here.</p>';
+      return;
+    }
+
+    const {r,g,b} = hexToRgb(state.color);
+    let html = `<div class="embed" style="border-left-color: rgb(${r},${g},${b});">`;
+    html += `<div class="embed-body"><div class="embed-main">`;
+
+    if (state.authorName){
+      html += `<div class="embed-author">`;
+      if (state.authorIcon) html += `<img src="${escapeAttr(state.authorIcon)}" onerror="this.style.display='none'">`;
+      if (state.authorUrl) html += `<a href="${escapeAttr(state.authorUrl)}" target="_blank" style="color:#fff;text-decoration:none;"><span>${wrapMentions(escapeHtml(state.authorName))}</span></a>`;
+      else html += `<span>${wrapMentions(escapeHtml(state.authorName))}</span>`;
+      html += `</div>`;
+    }
+    if (state.title){
+      html += `<div class="embed-title">`;
+      html += state.titleUrl ? `<a href="${escapeAttr(state.titleUrl)}" target="_blank">${wrapMentions(escapeHtml(state.title))}</a>` : wrapMentions(escapeHtml(state.title));
+      html += `</div>`;
+    }
+    if (state.description){
+      html += `<div class="embed-desc">${mdToHtml(state.description)}</div>`;
+    }
+
+    if (state.fields.some(f=>f.name || f.value)){
+      html += `<div class="embed-fields">`;
+      state.fields.forEach(f=>{
+        if (!f.name && !f.value) return;
+        html += `<div class="embed-field ${f.inline?'inline':''}">
+          <div class="embed-field-name">${inlineMd(f.name)}</div>
+          <div class="embed-field-value">${mdToHtml(f.value, {allowHeaders:false})}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (state.imageUrl){
+      html += `<img class="embed-image" src="${escapeAttr(state.imageUrl)}" onerror="this.style.display='none'">`;
+    }
+
+    let footerParts = [];
+    if (state.footerText) footerParts.push(wrapMentions(escapeHtml(state.footerText)));
+    if (state.tsMode === "now") footerParts.push("Today at 12:00 PM");
+    if (state.tsMode === "custom" && state.customDate){
+      const d = new Date(state.customDate);
+      if (!isNaN(d)) footerParts.push(d.toLocaleString());
+    }
+    if (footerParts.length){
+      html += `<div class="embed-footer">`;
+      if (state.footerText && state.footerIcon) html += `<img src="${escapeAttr(state.footerIcon)}" onerror="this.style.display='none'">`;
+      html += `<span>${footerParts.join(" &bull; ")}</span></div>`;
+    }
+
+    html += `</div>`; // embed-main
+    if (state.thumbnailUrl){
+      html += `<img class="embed-thumb" src="${escapeAttr(state.thumbnailUrl)}" onerror="this.style.display='none'">`;
+    }
+    html += `</div></div>`; // embed-body, embed
+
+    wrap.innerHTML = html;
+  }
+
+  function generateCode(){
+    const embedLines = [];
+    const {r,g,b} = hexToRgb(state.color);
+
+    if (state.title){
+      embedLines.push(`set title of embed to "${escSkript(state.title)}"`);
+      if (state.titleUrl) embedLines.push(`set title url of embed to "${escSkript(state.titleUrl)}"`);
+    }
+    if (state.description){
+      embedLines.push(`set description of embed to "${escSkript(state.description)}"`);
+    }
+    embedLines.push(`set embed color of embed to rgb(${r}, ${g}, ${b})`);
+    if (state.authorName){
+      embedLines.push(`set author of the embed to "${escSkript(state.authorName)}"`);
+      if (state.authorIcon) embedLines.push(`set author icon of embed to "${escSkript(state.authorIcon)}"`);
+      if (state.authorUrl) embedLines.push(`set author url of embed to "${escSkript(state.authorUrl)}"`);
+    }
+    if (state.thumbnailUrl) embedLines.push(`set thumbnail of embed to "${escSkript(state.thumbnailUrl)}"`);
+    if (state.imageUrl) embedLines.push(`set image of embed to "${escSkript(state.imageUrl)}"`);
+    if (state.footerText){
+      embedLines.push(`set footer of embed to "${escSkript(state.footerText)}"`);
+      if (state.footerIcon) embedLines.push(`set footer icon of embed to "${escSkript(state.footerIcon)}"`);
+    }
+    if (state.tsMode === "now"){
+      embedLines.push(`set timestamp of embed to now`);
+    } else if (state.tsMode === "custom" && state.customDate){
+      const d = new Date(state.customDate);
+      if (!isNaN(d)){
+        embedLines.push(`set timestamp of embed to date(${d.getFullYear()}, ${d.getMonth()+1}, ${d.getDate()}, ${d.getHours()}, ${d.getMinutes()}, ${d.getSeconds()})`);
+      }
+    }
+    state.fields.forEach(f=>{
+      if (!f.name && !f.value) return;
+      const verb = f.inline ? "add inline field named" : "add field named";
+      embedLines.push(`${verb} "${escSkript(f.name)}" with value "${escSkript(f.value)}" to fields of embed`);
+    });
+
+    const lines = [];
+    lines.push(`create a new message and store it in {_msg}:`);
+    lines.push(`    make embed:`);
+    if (embedLines.length === 0){
+      lines.push(`        # fill in the form to generate embed properties`);
+    } else {
+      embedLines.forEach(l => lines.push(`        ${l}`));
+    }
+    lines.push(`    add last embed to the embeds of the message`);
+    return lines.join("\n");
+  }
+
+  function computeWarnings(){
+    const warnings = [];
+    if (state.title.length > LIMITS.title) warnings.push(`Title is ${state.title.length} characters (limit ${LIMITS.title}).`);
+    if (state.description.length > LIMITS.description) warnings.push(`Description is ${state.description.length} characters (limit ${LIMITS.description}).`);
+    if (state.authorName.length > LIMITS.authorName) warnings.push(`Author name is ${state.authorName.length} characters (limit ${LIMITS.authorName}).`);
+    if (state.footerText.length > LIMITS.footerText) warnings.push(`Footer text is ${state.footerText.length} characters (limit ${LIMITS.footerText}).`);
+    if (state.fields.length > MAX_FIELDS) warnings.push(`You have ${state.fields.length} fields (limit ${MAX_FIELDS}).`);
+    state.fields.forEach((f,i)=>{
+      if (f.name.length > LIMITS.fieldName) warnings.push(`Field ${i+1} name is ${f.name.length} characters (limit ${LIMITS.fieldName}).`);
+      if (f.value.length > LIMITS.fieldValue) warnings.push(`Field ${i+1} value is ${f.value.length} characters (limit ${LIMITS.fieldValue}).`);
+    });
+    let total = state.title.length + state.description.length + state.authorName.length + state.footerText.length;
+    state.fields.forEach(f => total += f.name.length + f.value.length);
+    if (total > LIMITS.total) warnings.push(`Total embed character count is ${total} (Discord limit ${LIMITS.total} across the whole embed).`);
+    return warnings;
+  }
+
+  function updateCounts(){
+    const set = (id, len, limit) => {
+      const c = document.getElementById(`count-${id}`);
+      if (!c) return;
+      c.textContent = `${len} / ${limit}`;
+      c.classList.toggle("over", len > limit);
+    };
+    set("authorName", state.authorName.length, LIMITS.authorName);
+    set("title", state.title.length, LIMITS.title);
+    set("description", state.description.length, LIMITS.description);
+    set("footerText", state.footerText.length, LIMITS.footerText);
+  }
+
+  const codeOutputEl = document.getElementById("codeOutput");
+  const editedBadge = document.getElementById("editedBadge");
+  const STR = "\u0000";
+
+  function pad2(n){ return String(n).padStart(2, "0"); }
+  function toDatetimeLocalValue(d){
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  function tokenizeLine(line){
+    let out = "";
+    const strings = [];
+    let i = 0;
+    while (i < line.length){
+      if (line[i] === '"'){
+        i++;
+        let val = "";
+        while (i < line.length){
+          // a %...% span is its own lexical context - quotes inside it
+          // (e.g. %mention tag of channel with id "123"%) don't end the string
+          if (line[i] === "%"){
+            const close = line.indexOf("%", i + 1);
+            if (close > i + 1){
+              val += line.slice(i, close + 1);
+              i = close + 1;
+              continue;
+            }
+          }
+          if (line[i] === '"'){
+            if (line[i+1] === '"'){ val += '"'; i += 2; continue; }
+            i++; break;
+          }
+          val += line[i]; i++;
+        }
+        strings.push(val);
+        out += STR;
+      } else {
+        out += line[i]; i++;
+      }
+    }
+    return { masked: out, strings };
+  }
+
+  function skriptStringToText(v){
+    return (v || "").replace(/%nl%/gi, "\n");
+  }
+
+  // Parses pasted/typed DiSky code back into form state. Uses a masked
+  // version of each line (quoted strings replaced by a placeholder marker)
+  // so matching doesn't care what's inside the quotes.
+  function parseSkriptCode(code){
+    const draft = {
+      authorName:"", authorIcon:"", authorUrl:"",
+      title:"", titleUrl:"",
+      description:"",
+      color: state.color,
+      thumbnailUrl:"", imageUrl:"",
+      footerText:"", footerIcon:"",
+      tsMode:"none", customDate:"",
+      fields: []
+    };
+    let matchedAny = false;
+
+    code.split(/\r?\n/).forEach(raw=>{
+      const line = raw.trim();
+      if (!line || line.startsWith("#")) return;
+
+      let m = /^set\s+embed\s+color\s+of\s+embed\s+to\s+rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(line);
+      if (m){
+        const rgb = [m[1],m[2],m[3]].map(n => Math.max(0, Math.min(255, parseInt(n,10))));
+        draft.color = "#" + rgb.map(n => n.toString(16).padStart(2,"0")).join("");
+        matchedAny = true; return;
+      }
+      if (/^set\s+timestamp\s+of\s+embed\s+to\s+now$/i.test(line)){
+        draft.tsMode = "now"; matchedAny = true; return;
+      }
+      m = /^set\s+timestamp\s+of\s+embed\s+to\s+date\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*)?\)$/i.exec(line);
+      if (m){
+        const dt = new Date(+m[1], (+m[2])-1, +m[3], m[4]?+m[4]:0, m[5]?+m[5]:0, m[6]?+m[6]:0);
+        if (!isNaN(dt)){
+          draft.tsMode = "custom";
+          draft.customDate = toDatetimeLocalValue(dt);
+          matchedAny = true;
+        }
+        return;
+      }
+
+      const { masked, strings } = tokenizeLine(line);
+      const norm = masked.replace(/\s+/g, " ").trim().toLowerCase();
+      const one = (re, apply) => {
+        if (re.test(norm)){ apply(); matchedAny = true; return true; }
+        return false;
+      };
+
+      if (one(new RegExp(`^set title of embed to ${STR}$`), () => draft.title = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set title url of embed to ${STR}$`), () => draft.titleUrl = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set description of embed to ${STR}$`), () => draft.description = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set author of (?:the )?embed to ${STR}$`), () => draft.authorName = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set author icon of embed to ${STR}$`), () => draft.authorIcon = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set author url of embed to ${STR}$`), () => draft.authorUrl = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set thumbnail of embed to ${STR}$`), () => draft.thumbnailUrl = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set image of embed to ${STR}$`), () => draft.imageUrl = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set footer of embed to ${STR}$`), () => draft.footerText = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^set footer icon of embed to ${STR}$`), () => draft.footerIcon = skriptStringToText(strings[0]))) return;
+      if (one(new RegExp(`^add inline field named ${STR} with value ${STR} to fields of embed$`), () => draft.fields.push({id:uid(), name:skriptStringToText(strings[0]), value:skriptStringToText(strings[1]), inline:true}))) return;
+      if (one(new RegExp(`^add field named ${STR} with value ${STR} to fields of embed$`), () => draft.fields.push({id:uid(), name:skriptStringToText(strings[0]), value:skriptStringToText(strings[1]), inline:false}))) return;
+      // anything else (the create-message/make-embed/add-last-embed scaffolding,
+      // comments, or a typo) is silently ignored rather than treated as an error
+    });
+
+    return { draft, matchedAny };
+  }
+
+  function applyStateToFormInputs(){
+    Object.keys(els).forEach(id=>{
+      if (!els[id]) return;
+      els[id].value = state[id];
+    });
+    document.getElementById("colorHex").textContent = state.color.toUpperCase();
+    document.querySelectorAll('input[name="tsMode"]').forEach(r=>{
+      r.checked = (r.value === state.tsMode);
+    });
+    customDateWrap.style.display = state.tsMode === "custom" ? "block" : "none";
+    renderFieldRows();
+  }
+
+  function update(regenerateCode){
+    if (regenerateCode === undefined) regenerateCode = true;
+    updateCounts();
+    renderPreview();
+    if (regenerateCode){
+      codeOutputEl.value = generateCode();
+    }
+
+    const warnEl = document.getElementById("warnings");
+    const warnings = computeWarnings();
+    warnEl.innerHTML = warnings.map(w => `<div class="warning-item">${escapeHtml(w)}</div>`).join("");
+  }
+
+  codeOutputEl.addEventListener("input", ()=>{
+    const { draft, matchedAny } = parseSkriptCode(codeOutputEl.value);
+    editedBadge.classList.toggle("show", !matchedAny && codeOutputEl.value.trim().length > 0);
+    if (!matchedAny) return;
+    Object.assign(state, draft);
+    applyStateToFormInputs();
+    update(false);
+  });
+
+  document.getElementById("syncBtn").addEventListener("click", ()=>{
+    editedBadge.classList.remove("show");
+    update(true);
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", async ()=>{
+    const code = codeOutputEl.value;
+    try{
+      await navigator.clipboard.writeText(code);
+    }catch(e){
+      const ta = document.createElement("textarea");
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    const msg = document.getElementById("copiedMsg");
+    msg.style.display = "inline";
+    setTimeout(()=>{ msg.style.display = "none"; }, 1500);
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", ()=>{
+    Object.assign(state, {
+      authorName:"", authorIcon:"", authorUrl:"",
+      title:"", titleUrl:"",
+      description:"",
+      color:"#5865f2",
+      thumbnailUrl:"", imageUrl:"",
+      footerText:"", footerIcon:"",
+      tsMode:"none", customDate:"",
+      fields: []
+    });
+    editedBadge.classList.remove("show");
+    applyStateToFormInputs();
+    update(true);
+  });
+
+  document.getElementById("loadExampleBtn").addEventListener("click", ()=>{
+    Object.assign(state, {
+      authorName: "My Server",
+      authorIcon: "https://cdn.discordapp.com/embed/avatars/0.png",
+      authorUrl: "https://example.com",
+      title: "Welcome to the server!",
+      titleUrl: "https://example.com/rules",
+      description: "This is an example embed built with the **DiSky Embed Builder**.\nEdit any field on the left to see it update *live*.",
+      color: "#5865f2",
+      thumbnailUrl: "https://cdn.discordapp.com/embed/avatars/1.png",
+      imageUrl: "",
+      footerText: "Powered by DiSky",
+      footerIcon: "https://cdn.discordapp.com/embed/avatars/2.png",
+      tsMode: "now",
+      customDate: "",
+      fields: [
+        {id: uid(), name: "Rules", value: "Be respectful to everyone.", inline: true},
+        {id: uid(), name: "Support", value: "Open a ticket in #support.", inline: true}
+      ]
+    });
+    editedBadge.classList.remove("show");
+    applyStateToFormInputs();
+    update(true);
+  });
+
+  // init
+  renderFieldRows();
+  update();
+})();
+</script>
+
+</body>
+</html>
